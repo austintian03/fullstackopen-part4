@@ -34,6 +34,27 @@ test('unique identifier property of the blog posts is named "id"', async () => {
     assert(!blogToView.hasOwnProperty('_id') && blogToView.hasOwnProperty('id'))
 })
 
+test('a blog post can be added', async () => {
+    const newBlog = {
+      title: "TDD harms architecture",
+      author: "Robert C. Martin",
+      url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+      likes: 0,
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+
+    const urls = blogsAtEnd.map(b => b.url)
+    assert(urls.includes('http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html'))
+})
+
 after(async () => {
     await mongoose.connection.close()
 })
