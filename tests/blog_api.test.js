@@ -1,4 +1,4 @@
-const { test, beforeEach, after } = require('node:test')
+const { test, beforeEach, after, describe } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
 const mongoose = require('mongoose')
@@ -69,6 +69,9 @@ test('creating a blog post without a "likes" property defaults to 0', async () =
         .expect('Content-Type', /application\/json/)
 
     assert.strictEqual(savedNote.body.likes, 0)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
 })  
 
 test('cannot create a blog post that is missing a title', async () => {
@@ -101,6 +104,34 @@ test('cannot create a blog post that is missing an url', async () => {
 
     const blogsAtEnd = await helper.blogsInDb()
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+
+describe.only('deletion of a blog', () => {
+    test.only('succeeds with status code 204 if id is valid', async () => {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToDelete = blogsAtStart[0]
+
+        await api
+            .delete(`/api/blogs/${blogToDelete.id}`)
+            .expect(204)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+
+        const ids = blogsAtEnd.map(b => b.id)
+        assert(!ids.includes(blogToDelete.id))
+    })
+
+    test.only('fails with status code 404 if id is not found in db', async () => {
+        const invalidId = '661eb58646c85344b3db357c'
+
+        await api
+            .delete(`/api/blogs/${invalidId}`)
+            .expect(404)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+    })
 })
 
 after(async () => {
