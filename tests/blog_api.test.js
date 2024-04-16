@@ -34,7 +34,7 @@ test('unique identifier property of the blog posts is named "id"', async () => {
     assert(!blogToView.hasOwnProperty('_id') && blogToView.hasOwnProperty('id'))
 })
 
-test('a blog post can be added', async () => {
+test('a valid blog post can be added', async () => {
     const newBlog = {
         title: "TDD harms architecture",
         author: "Robert C. Martin",
@@ -55,7 +55,7 @@ test('a blog post can be added', async () => {
     assert(urls.includes('http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html'))
 })
 
-test.only('creating a blog post without a "likes" property defaults to 0', async () => {
+test('creating a blog post without a "likes" property defaults to 0', async () => {
     const newBlog = {
         title: "TDD harms architecture",
         author: "Robert C. Martin",
@@ -70,6 +70,38 @@ test.only('creating a blog post without a "likes" property defaults to 0', async
 
     assert.strictEqual(savedNote.body.likes, 0)
 })  
+
+test('cannot create a blog post that is missing a title', async () => {
+    const noTitle = {
+        author: "Robert C. Martin",
+        url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+        likes: 20
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(noTitle)
+        .expect(400)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+
+test('cannot create a blog post that is missing an url', async () => {
+    const noTitle = {
+        title: "TDD harms architecture",
+        author: "Robert C. Martin",
+        likes: 20
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(noTitle)
+        .expect(400)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
 
 after(async () => {
     await mongoose.connection.close()
