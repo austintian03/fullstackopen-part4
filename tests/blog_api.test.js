@@ -36,10 +36,10 @@ test('unique identifier property of the blog posts is named "id"', async () => {
 
 test('a blog post can be added', async () => {
     const newBlog = {
-      title: "TDD harms architecture",
-      author: "Robert C. Martin",
-      url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
-      likes: 0,
+        title: "TDD harms architecture",
+        author: "Robert C. Martin",
+        url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+        likes: 0,
     }
 
     await api
@@ -54,6 +54,22 @@ test('a blog post can be added', async () => {
     const urls = blogsAtEnd.map(b => b.url)
     assert(urls.includes('http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html'))
 })
+
+test.only('creating a blog post without a "likes" property defaults to 0', async () => {
+    const newBlog = {
+        title: "TDD harms architecture",
+        author: "Robert C. Martin",
+        url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+    }
+
+    const savedNote = await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(savedNote.body.likes, 0)
+})  
 
 after(async () => {
     await mongoose.connection.close()
