@@ -106,8 +106,8 @@ test('cannot create a blog post that is missing an url', async () => {
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
 })
 
-describe.only('deletion of a blog', () => {
-    test.only('succeeds with status code 204 if id is valid', async () => {
+describe('deletion of a blog', () => {
+    test('succeeds with status code 204 if id is valid', async () => {
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
 
@@ -122,15 +122,48 @@ describe.only('deletion of a blog', () => {
         assert(!ids.includes(blogToDelete.id))
     })
 
-    test.only('fails with status code 404 if id is not found in db', async () => {
-        const invalidId = '661eb58646c85344b3db357c'
+    test('fails with status code 404 if blog does not exist', async () => {
+        const validNonexistingId = await helper.nonExistingId()
 
         await api
-            .delete(`/api/blogs/${invalidId}`)
+            .delete(`/api/blogs/${validNonexistingId}`)
             .expect(404)
 
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+    })
+})
+
+describe('updating a blog', () => {
+    test('updating the number of likes for an existing blog post succeeds', async () => {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToUpdate = blogsAtStart[0]
+
+        const updatedBlog = await api
+            .put(`/api/blogs/${blogToUpdate.id}`)
+            .send({ likes: blogToUpdate.likes + 5 })
+            .expect(200)
+        
+        assert.strictEqual(updatedBlog.body.likes, blogToUpdate.likes + 5)
+    })
+
+    test('fails with status code 404 if blog does not exist', async () => {
+        const validNonexistingId = await helper.nonExistingId()
+
+        await api
+            .put(`/api/blogs/${validNonexistingId}`)
+            .send({ likes: 5 })
+            .expect(404)
+    })
+
+    test('fails with status code 400 if number of likes is set to a non-number', async () => {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToUpdate = blogsAtStart[0]
+
+        await api
+            .put(`/api/blogs/${blogToUpdate.id}`)
+            .send({ likes: 'fifty' })
+            .expect(400)
     })
 })
 
