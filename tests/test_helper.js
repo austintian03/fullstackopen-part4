@@ -59,6 +59,29 @@ const nonExistingId = async () => {
   return blog._id.toString()
 }
 
+const User = require('../models/user')
+
+const initialUsers = [
+  {
+    "username": "tianman",
+    "name": "Austin Tian",
+    "password": "testpass1",
+    "id": "66227bb20e5c387aef70f40d"
+  },
+  {
+    "username": "rockshrimp",
+    "name": "Kril",
+    "password": "treasure",
+    "id": "66229713476757f1dfa34fbf"
+  }
+]
+
+const usersInDb = async () => {
+  const users = await User.find({})
+  return users.map(user => user.toJSON())
+}
+
 module.exports = {
-  initialBlogs, blogsInDb, nonExistingId
+  initialBlogs, blogsInDb, nonExistingId,
+  initialUsers, usersInDb
 }

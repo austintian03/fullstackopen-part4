@@ -7,13 +7,20 @@ const app = require('../app')
 const api = supertest(app)
 
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
 
     for (let blog of helper.initialBlogs) {
         let blogObject = new Blog(blog)
         await blogObject.save()
+    }
+
+    for (let user of helper.initialUsers) {
+        let userObject = new User(user)
+        await userObject.save()
     }
 })
 
@@ -91,7 +98,7 @@ test('cannot create a blog post that is missing a title', async () => {
 })
 
 test('cannot create a blog post that is missing an url', async () => {
-    const noTitle = {
+    const noUrl = {
         title: "TDD harms architecture",
         author: "Robert C. Martin",
         likes: 20
@@ -99,7 +106,7 @@ test('cannot create a blog post that is missing an url', async () => {
 
     await api
         .post('/api/blogs')
-        .send(noTitle)
+        .send(noUrl)
         .expect(400)
 
     const blogsAtEnd = await helper.blogsInDb()
@@ -164,6 +171,40 @@ describe('updating a blog', () => {
             .put(`/api/blogs/${blogToUpdate.id}`)
             .send({ likes: 'fifty' })
             .expect(400)
+    })
+})
+
+describe('creating a user', () => {
+    test('fails with status code 400 when creating a user with too short a username', async () => {
+        const invalidUsername = {
+            username: "Bo",
+            name: "Boris O.",
+            password: "testpass"
+        }
+
+        await api
+            .post('/api/users')
+            .send(invalidUsername)
+            .expect(400)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert.strictEqual(usersAtEnd.length, helper.initialUsers.length)
+    })
+
+    test('fails with status code 400 when creating a user with too short a password', async () => {
+        const invalidPass = {
+            username: "Boo",
+            name: "Boris O.",
+            password: "pw"
+        }
+
+        await api
+            .post('/api/users')
+            .send(invalidPass)
+            .expect(400)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert.strictEqual(usersAtEnd.length, helper.initialUsers.length)
     })
 })
 
